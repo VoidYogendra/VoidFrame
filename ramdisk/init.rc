@@ -786,7 +786,7 @@ service logcatd /system/bin/logcat -b all -v threadtime -v usec -v printable -D 
     writepid /dev/cpuset/system-background/tasks
 
 # my work
-service tempdisplay /sbin/temp_display
+service tempdisplay /data/local/bin/video_display
     class core
     user root
     group graphics
