@@ -319,6 +319,21 @@ ffmpeg \
 - | nc 192.168.42.2 5000
 ```
 
+or screen share via obs virtual camera
+
+```bash
+ffmpeg \
+-re \
+-f v4l2 \
+-i /dev/video0 \
+-f rawvideo \
+-pix_fmt rgb24 \
+-vf "transpose=2,scale=240:320" \
+- | nc 192.168.42.2 5000
+```
+
+## ⚠️ before you run ffmpeg on host you must wait for device to mount as ether otherwise fps will drop
+
 ## Key Options
 
 | Option                 | Description                |
