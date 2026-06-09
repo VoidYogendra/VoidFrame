@@ -306,9 +306,14 @@ LCD Panel
 
 # Phase 6 — Ethernet Video Streaming
 
+```bash
+sudo ifconfig enp2s0f0u6 192.168.42.1 netmask 255.255.255.0 up; # Sets up the dedicated local network pipe for the video stream
+```
+
 Once `video_display_v2` is running and the RNDIS link is active:
 
 ```bash
+sudo ifconfig enp2s0f0u6 192.168.42.1 netmask 255.255.255.0 up; 
 ffmpeg \
 -re \
 -stream_loop -1 \
@@ -322,6 +327,7 @@ ffmpeg \
 or screen share via obs virtual camera
 
 ```bash
+sudo ifconfig enp2s0f0u6 192.168.42.1 netmask 255.255.255.0 up;
 ffmpeg \
 -re \
 -f v4l2 \
@@ -329,6 +335,19 @@ ffmpeg \
 -f rawvideo \
 -pix_fmt rgb24 \
 -vf "transpose=2,scale=240:320" \
+- | nc 192.168.42.2 5000
+```
+
+to lower host cpu overhead but you will have to set canvas to mobile screen size in obs and rotate and stretch to fit device  
+
+```bash
+sudo ifconfig enp2s0f0u6 192.168.42.1 netmask 255.255.255.0 up;
+ffmpeg \
+-re \
+-f v4l2 \
+-i /dev/video0 \
+-f rawvideo \
+-pix_fmt rgb24 \
 - | nc 192.168.42.2 5000
 ```
 

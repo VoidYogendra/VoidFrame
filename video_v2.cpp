@@ -38,8 +38,8 @@ int main() {
         return 1;
     }
 
-    int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    int rcvbuf = 1024 * 1024; // 1MB buffer
+    setsockopt(server_fd, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf));
 
     struct sockaddr_in address;
     std::memset(&address, 0, sizeof(address));
