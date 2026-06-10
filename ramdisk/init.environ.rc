@@ -12,3 +12,4 @@ on init
     export LD_PRELOAD libsigchain.so
     export PATH /data/local/bin:/sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin
     export TERM xterm
+    export LD_LIBRARY_PATH /system/lib:/vendor/lib

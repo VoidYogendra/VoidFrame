@@ -410,3 +410,65 @@ LCD Panel
 ```
 
 A legacy Android smartphone is transformed into a dedicated framebuffer-driven display appliance with no Android graphics stack in the rendering path.
+
+
+# Phase 6 — Network Receiver (v3)
+
+`video_display_v3` using media codec
+  #works well with live stream from obs but sucks in video stream
+
+## Build
+
+```bash
+'/run/media/goku/54F2BAD1F2BAB718/SDK/ndk/29.0.14206865/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang++' \
+video_display_v3.cpp \
+-o video_display_v3 \
+-O3 \
+-mcpu=cortex-a9 \
+-mfpu=neon \
+-funroll-loops \
+-static-libstdc++ \
+-Wl,-rpath=/system/lib \
+-Wl,-s \
+-lmediandk
+
+adb push video_display_v3 \
+/data/local/bin/video_display_v3
+
+adb shell chmod 755 \
+/data/local/bin/video_display_v3
+```
+
+
+```bash
+sudo nmcli dev set enp2s0f0u6 managed no; 
+sudo ifconfig enp2s0f0u6 192.168.42.1 netmask 255.255.255.0 up;
+ffmpeg \
+-re \
+-f v4l2 \
+-i /dev/video0 \
+-c:v libx264 \
+-preset superfast \
+-tune zerolatency \
+-profile:v baseline \
+-crf 12 \
+-pix_fmt yuv420p \
+-f h264 \
+- | nc 192.168.42.2 5000
+
+clear;sudo nmcli dev set enp2s0f0u6 managed no; 
+sudo ifconfig enp2s0f0u6 192.168.42.1 netmask 255.255.255.0 up;
+ffmpeg \
+-re \
+-stream_loop -1 \
+-i /run/media/goku/6834FB6534FB3522/goku-super-saiyan-dragon-ball-wallpaperwaifu-com.mp4 \
+-vf "transpose=2,scale=240:320:flags=bicubic" \
+-c:v libx264 \
+-preset superfast \
+-tune zerolatency \
+-profile:v baseline \
+-crf 12 \
+-pix_fmt yuv420p \
+-f h264 \
+- | nc 192.168.42.2 5000
+```

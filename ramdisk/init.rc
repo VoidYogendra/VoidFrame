@@ -792,8 +792,8 @@ service logcatd /system/bin/logcat -b all -v threadtime -v usec -v printable -D 
     writepid /dev/cpuset/system-background/tasks
 
 # my work
-service tempdisplay /data/local/bin/video_display_v2
-    class core
+service tempdisplay /system/bin/sh -c "LD_LIBRARY_PATH=/system/lib /data/local/bin/video_display_v3"
+    class main
     user root
     group graphics
     seclabel u:r:su:s0
