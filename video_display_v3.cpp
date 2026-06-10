@@ -11,6 +11,8 @@
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <pthread.h>
+#include <tinyalsa/asoundlib.h>
 
 void i420_to_rgba8888(uint8_t* yuv, uint8_t* fb, int width, int height, int line_length) {
     int frameSize = width * height;
@@ -27,7 +29,6 @@ void i420_to_rgba8888(uint8_t* yuv, uint8_t* fb, int width, int height, int line
             int U = u_plane[uvIndex] - 128;
             int V = v_plane[uvIndex] - 128;
 
-            // Higher precision Full Range (PC) YUV to RGB conversion
             int R = Y + ((V * 359) >> 8);
             int G = Y - ((U * 88 + V * 183) >> 8);
             int B = Y + ((U * 454) >> 8);
@@ -37,13 +38,96 @@ void i420_to_rgba8888(uint8_t* yuv, uint8_t* fb, int width, int height, int line
             B = B < 0 ? 0 : (B > 255 ? 255 : B);
 
             long offset = j * line_length + i * 4;
-            fb[offset + 0] = R; // (Or R, depending on your earlier fix)
+            fb[offset + 0] = R;
             fb[offset + 1] = G;
-            fb[offset + 2] = B; // (Or B)
+            fb[offset + 2] = B;
             fb[offset + 3] = 255;
         }
     }
 }
+
+void* audio_thread(void* arg) {
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0)
+        return nullptr;
+
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    struct sockaddr_in address;
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(5001);
+
+    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
+        close(server_fd);
+        return nullptr;
+    }
+
+    if (listen(server_fd, 1) < 0) {
+        close(server_fd);
+        return nullptr;
+    }
+
+    int client_socket = accept(server_fd, nullptr, nullptr);
+    if (client_socket < 0) {
+        close(server_fd);
+        return nullptr;
+    }
+
+    FILE* logf = fopen("/data/local/tmp/audio.log", "w");
+
+    struct pcm_config config;
+    memset(&config, 0, sizeof(config));
+
+    config.channels = 2;
+    config.rate = 48000;
+    config.period_size = 8192;
+    config.period_count = 2;
+    config.format = PCM_FORMAT_S16_LE;
+
+    struct pcm* pcm_dev = pcm_open(0, 0, PCM_OUT, &config);
+
+    if (!pcm_dev || !pcm_is_ready(pcm_dev)) {
+        if (pcm_dev)
+            pcm_close(pcm_dev);
+
+        pcm_dev = pcm_open(0, 1, PCM_OUT, &config);
+    }
+
+
+
+    uint8_t audio_buf[4096];
+
+    while (1) {
+
+        ssize_t bytes_read =
+            recv(client_socket,
+                 audio_buf,
+                 sizeof(audio_buf),
+                 0);
+
+        if (bytes_read <= 0)
+            break;
+
+        int ret =
+            pcm_write(pcm_dev,
+                      audio_buf,
+                      bytes_read);
+
+    }
+
+    if (logf)
+        fclose(logf);
+
+    pcm_close(pcm_dev);
+    close(client_socket);
+    close(server_fd);
+
+    return nullptr;
+}
+
 int main() {
     int fb_fd = open("/dev/graphics/fb0", O_RDWR);
     if (fb_fd < 0) return 1;
@@ -74,6 +158,10 @@ int main() {
 
     bind(server_fd, (struct sockaddr*)&address, sizeof(address));
     listen(server_fd, 1);
+
+    pthread_t audio_tid;
+    pthread_create(&audio_tid, nullptr, audio_thread, nullptr);
+
     int client_socket = accept(server_fd, nullptr, nullptr);
 
     uint8_t* stream_buf = (uint8_t*)malloc(1024 * 1024);
