@@ -438,7 +438,7 @@ sudo ifconfig enp2s0f0u6 \
 192.168.42.1 \
 netmask 255.255.255.0 up
 adb shell tinymix 6 1
-adb shell tinymix 7 1
+adb shell tinymix 14 14
 ffmpeg \
 -f v4l2 -i /dev/video0 \
 -f alsa -i default \
@@ -468,6 +468,7 @@ sudo ifconfig enp2s0f0u6 \
 192.168.42.1 \
 netmask 255.255.255.0 up
 adb shell tinymix 6 1
+adb shell tinymix 14 14
 ffmpeg \
 -re \
 -stream_loop -1 \
