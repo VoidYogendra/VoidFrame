@@ -438,6 +438,7 @@ sudo ifconfig enp2s0f0u6 \
 192.168.42.1 \
 netmask 255.255.255.0 up
 adb shell tinymix 6 1
+adb shell tinymix 7 1
 ffmpeg \
 -f v4l2 -i /dev/video0 \
 -f alsa -i default \
@@ -517,10 +518,11 @@ Speaker
 
 On the Galaxy Star, audio outputs are disabled by default.
 
-Enable the speaker using:
+Enable the speaker using and up volume to full:
 
 ```bash
 adb shell tinymix 6 1
+adb shell tinymix 14 15
 ```
 
 ## Mixer Controls
