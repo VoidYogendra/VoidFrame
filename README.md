@@ -602,3 +602,11 @@ LCD Panel
 ```
 
 The result is a legacy Android smartphone transformed into a dedicated framebuffer-driven display appliance with virtually none of the standard Android graphics stack in the rendering path.
+
+
+Phase 10 — Desktop Launcher Automation
+To run the display and audio pipeline seamlessly as a desktop application without manually configuring network interfaces or managing terminal windows, the host workflow is split into two cooperative scripts:
+
+auto_connect.sh (Root Daemon — Video & USB RNDIS Network): Runs with elevated privileges (pkexec/sudo) to dynamically detect the RNDIS network interface attached to device serial 19761202 via /sys/class/net/, detach it from NetworkManager, assign 192.168.42.1/24, and stream /dev/video0 (OBS Virtual Camera) as low-latency H.264 to TCP port 5000. Automatically reboots the device if the network or stream stalls.
+
+auto_connect_audio.sh (User-Space Launcher Entry — Audio DSP & Lifecycle): Runs in the active desktop user session so pactl and ffmpeg can access the user's PipeWire/PulseAudio socket (/run/user/1000/pulse). Uses flock (/tmp/voidframe_audio.lock) to prevent duplicate instances, launches auto_connect.sh in the background via pkexec, enables the TinyALSA speaker path (tinymix 6 1, tinymix 7 1, tinymix 14 11), and continuously streams live desktop audio to TCP port 5001 with real-time mono downmixing, a 180 Hz high-pass filter, dynamic compression, and peak limiting (alimiter) to prevent micro-speaker distortion.
